@@ -10,7 +10,7 @@ Create the db2data volume that hold the data for the db2inst1 instance :
 
 `cd` into `db2express-c` directory
 
-Launch the image build, take a look at the [Dockerfile](./db2express-c/Dockerfile) :
+Launch the image build, take a look at the [Dockerfile](./Dockerfile) :
 
     ./build.sh 
 
@@ -26,6 +26,6 @@ To connect to the running container, you can use :
 
     ./bash.sh
 
-Check the logs, it come from the tail -F db2diag.log into the [entrypoint.sh](./db2express-c/entrypoint.sh)
+Check the logs, it come from the tail -F db2diag.log into the [entrypoint.sh](./entrypoint.sh)
 
     docker logs -f db2
