@@ -109,6 +109,10 @@ RUN ${INSTALL_DIR}/expc/db2setup \
     -l ${INSTALL_DIR}/db2setup.log \
     -t ${INSTALL_DIR}/db2setup.trc
 
+# Remove installer dir
+# --------------------
+RUN rm -rf ${INSTALL_DIR}/expc
+
 # Validation tool
 # ---------------
 RUN /opt/IBM/DB2/bin/db2val
