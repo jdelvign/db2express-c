@@ -58,64 +58,53 @@ ENV HOME="/root" \
 
 # Update and install required tools and libraries
 # -----------------------------------------------
-RUN yum install -y \
-    file \
-    net-tools \
-    which \
-    bc \
-    numactl-libs \
-    pam \
-    pam.i686 \
-    libXp \
-    libXmu \
-#    libXrender \
-#    libXtst \
-#    libXft \
-    libaio && \
-    yum clean all && \
-    rm -rf /var/cache/yum && \
-    mkdir -p ${INSTALL_DIR}
-
-# Fix Warning about libpam.so* (Pluggable Authentication Module) during DB2 installation or db2prereqcheck
-# http://www-01.ibm.com/support/docview.wss?uid=swg21612536
-# -----------------------------------------------
-RUN cd /lib && \
-    ln -s libpam.so.0.83.1 libpam.so
-
-# Add Users and Groups needed by DB2
-# ----------------------------------
-RUN /usr/sbin/groupadd db2iadm1 && \
-    /usr/sbin/useradd -g db2iadm1 -d /home/db2inst1 -m -s /bin/bash db2inst1 && \
-    echo -e "db2inst1\ndb2inst1\n" | passwd db2inst1 && \
-    /usr/sbin/groupadd db2fadm1 && \
-    /usr/sbin/useradd -g db2fadm1 -d /home/db2fenc1 -m -s /bin/bash db2fenc1 && \
-    echo -e "db2fenc1\ndb2fenc1\n" | passwd db2fenc1
+RUN     yum install -y \
+        bc \
+        file \
+        libaio \
+        libXmu \
+        libXp \
+        net-tools \
+        numactl-libs \
+        pam \
+        pam.i686 \
+        which \ 
+    &&  yum clean all \
+    &&  rm -rf /var/cache/yum \
+    &&  mkdir -p ${INSTALL_DIR}
 
 # Copy binaries and all install stuff
 # ----------------------------------
 COPY ${INSTALL_FILE_PAYLOAD} ${DB2_REPONSE_FILE} ${INSTALL_DIR}/
 
-# Unpacking $INSTALL_FILE_PAYLOAD it creates a "expc" dir
-# Finally we create the dir that will contains the response files
-# ---------------------------------------------------------------
-RUN cd ${INSTALL_DIR} && \
-    tar -xzf ${INSTALL_FILE_PAYLOAD} && \
-    rm ${INSTALL_FILE_PAYLOAD}
-
-# Install DB2 with the response file
+# Add Users and Groups needed by DB2
 # ----------------------------------
-RUN ${INSTALL_DIR}/expc/db2setup \
-    -r ${INSTALL_DIR}/${DB2_REPONSE_FILE} \
-    -l ${INSTALL_DIR}/db2setup.log \
-    -t ${INSTALL_DIR}/db2setup.trc
-
+# Unpacking $INSTALL_FILE_PAYLOAD it creates a "expc" dir
+# -------------------------------------------------------
+# Fix Warning about libpam.so* (Pluggable Authentication Module) during DB2 installation or db2prereqcheck
+# http://www-01.ibm.com/support/docview.wss?uid=swg21612536
+# --------------------------------------------------------------------------------------------------------
+# ** Install DB2 with the response file **
 # Remove installer dir
-# --------------------
-RUN rm -rf ${INSTALL_DIR}/expc
-
-# Validation tool
-# ---------------
-RUN /opt/IBM/DB2/bin/db2val
+# RUN Validation tool
+# ---------------------------------------------------------------
+RUN     /usr/sbin/groupadd db2iadm1 \
+    &&  /usr/sbin/useradd -g db2iadm1 -d /home/db2inst1 -m -s /bin/bash db2inst1 \
+    &&  echo -e "db2inst1\ndb2inst1\n" | passwd db2inst1 \
+    &&  /usr/sbin/groupadd db2fadm1 \
+    &&  /usr/sbin/useradd -g db2fadm1 -d /home/db2fenc1 -m -s /bin/bash db2fenc1 \
+    &&  echo -e "db2fenc1\ndb2fenc1\n" | passwd db2fenc1 \
+    &&  cd /lib \
+    &&  ln -s libpam.so.0.83.1 libpam.so \
+    &&  cd ${INSTALL_DIR} \
+    &&  tar -xzf ${INSTALL_FILE_PAYLOAD} \
+    &&  rm ${INSTALL_FILE_PAYLOAD} \
+    &&  echo $(${INSTALL_DIR}/expc/db2setup \
+        -r ${INSTALL_DIR}/${DB2_REPONSE_FILE} \
+        -l ${INSTALL_DIR}/db2setup.log \
+        -t ${INSTALL_DIR}/db2setup.trc) \
+    &&  rm -rf ${INSTALL_DIR}/expc \
+    &&  /opt/IBM/DB2/bin/db2val
 
 # Copy entrypoint script
 # ----------------------
@@ -129,6 +118,6 @@ EXPOSE 50000
 # -----------
 WORKDIR ${HOME}
 
-# This image launch the installation program
-# ------------------------------------------
+# Entrypoint : Start DB2
+# ----------------------
 ENTRYPOINT [ "/root/entrypoint.sh", "start" ]
